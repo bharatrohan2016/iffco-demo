@@ -1,0 +1,38 @@
+.adminheading{
+    text-align: center;
+}
+.error{
+    color: red;
+    font-size: 11px;
+    margin-left: 3px;
+    margin-top: 2px;
+}
+.formInputError{
+    border: 1px solid red;
+}
+.btnLogin {
+    --tw-bg-opacity: 1;
+  background-color: rgb(25 60 52/var(--tw-bg-opacity));
+    color: white;
+    border-radius: 0px;
+}
+
+.btnLogin:hover {
+color: rgb(228, 228, 228);
+    border-radius: 50px;
+}
+
+.showPasswordBtn {
+    width : 50px;
+    background-color:#cecbcb;  
+}
+
+.loginContainer{
+    background-color: rgb(247 248 249);
+    box-shadow: rgb(204, 219, 232) 3px 3px 12px 0px inset, rgba(255, 255, 255, 0.5) -3px -3px 12px 1px inset;
+    padding: 15px;
+    border-right: 3px solid #396e7a;
+    border-bottom: 3px solid #396e7a;
+}
+
+/*  border: 1px solid red; */

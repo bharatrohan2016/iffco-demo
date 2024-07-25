@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <title>Farmer Map</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"/>
+  <script type="text/javascript" src="dist/leaflet-control-credits.js"></script>
+  <link rel="stylesheet" href="dist/leaflet-control-credits.css" />
+
+  <script src="data/geojson/ranjeet_verma.geojson"></script>
+</head>
+
+<style>
+body {
+    padding: 0;
+    margin: 0;
+}
+html, body, #map {
+    height: 100%;
+    width: 100vw;
+}
+</style>
+
+<style>body { padding: 0; margin: 0; } #map { height: 100%; width: 100vw; }</style>
+
+<style>
+.info { 
+  padding: 6px 8px; 
+  font: 14px/16px Arial, Helvetica, sans-serif; 
+  background: white; 
+  background: rgba(255,255,255,0.8); 
+  box-shadow: 0 0 15px rgba(0,0,0,0.2); 
+  border-radius: 5px; 
+} 
+
+.info h4 { 
+  margin: 0 0 5px; 
+  color: #777; 
+}
+
+.legend { 
+  text-align: left; 
+  line-height: 18px; 
+  color: #555; 
+} 
+
+.legend i { 
+  width: 18px; 
+  height: 18px; 
+  float: left; 
+  margin-right: 8px; 
+  opacity: 0.7; 
+}
+</style>
+
+<body>
+	<div id="map"></div>
+</body>
+    
+<script>
+
+  var mapOptions = {
+    center: [16.455445, 80.587832],
+    zoom: 13,
+    attributionControl: false,
+    scale: true
+  }
+
+  // Defining the layers
+  var map = L.map('map', mapOptions);
+  var esriLayer = new L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',{minZoom: 10, maxNativeZoom: 20});
+  var geojsonLayer = L.geoJson(ranjeet).addTo(map);
+  var rasterLayer_1 = L.tileLayer.wms("http://64.227.150.177:8080/geoserver/wms", {
+    layers: '		Guntur:Guntur__S1',
+    format: 'image/png',
+    transparent: true,  
+  });
+  var rasterLayer_2 = L.tileLayer.wms("http://64.227.150.177:8080/geoserver/wms", {
+    layers: '		Guntur:Guntur__S2',
+    format: 'image/png',
+    transparent: true,
+  });
+  var rasterLayer_3 = L.tileLayer.wms("http://64.227.150.177:8080/geoserver/wms", {
+    layers: '		Guntur:Guntur__S3',
+    format: 'image/png',
+    transparent: true,
+  });
+  var rasterLayer_4 = L.tileLayer.wms("http://64.227.150.177:8080/geoserver/wms", {
+    layers: '		Guntur:Guntur__S4',
+    format: 'image/png',
+    transparent: true,
+  });
+
+
+  // Creating Layer Group
+  var Layers = L.layerGroup([esriLayer]);
+
+  var baseMaps = {
+    "<span style='color: red'>Satellite Imagery</span>": esriLayer,
+  };
+  
+  var overlayMaps = {
+    "Survey 1": rasterLayer_1,
+    "Survey 2": rasterLayer_2,
+    "Survey 3": rasterLayer_3,
+    "Survey 4": rasterLayer_4,
+  };
+
+  
+   // Custom control for overlay selection with radio buttons
+   var customControl = L.Control.extend({
+    options: {
+      position: 'topright'
+    },
+
+    onAdd: function (map) {
+      var container = L.DomUtil.create('div', 'layer-control');
+      container.style.backgroundColor = 'white';
+      container.style.padding = '10px';
+      container.style.borderRadius = '5px';
+      container.style.opacity = '0.7';
+
+      var p = L.DomUtil.create('p', '', container);
+      p.innerHTML = "Select Map :";
+      p.style.fontSize = '14px';
+      p.style.margin = 0;
+
+      var form = L.DomUtil.create('form', '', p);
+      
+      Object.keys(overlayMaps).forEach(function (key) {
+       
+        var input = L.DomUtil.create('input', '', form);
+        input.type = 'radio';
+        input.name = 'overlayControl';
+        input.value = key;
+        input.style.marginTop = '8px';
+
+        input.onchange = function () {
+          Object.values(overlayMaps).forEach(layer => map.removeLayer(layer));
+          
+          map.addLayer(overlayMaps[this.value]);
+
+          handleLegends(this.value);
+
+        };
+
+        var label = L.DomUtil.create('label', '', form);
+        label.innerHTML = key;
+
+        label.style.fontSize = '13px';
+        label.style.margin = '5px';
+
+        label.insertBefore(input, label.firstChild);
+         form.appendChild(label); // Append label to the form
+
+        var br = L.DomUtil.create('br', '', form);
+        form.appendChild(br); // Append a line break after each label
+      });
+
+      return container;
+    }
+  });
+
+  //L.control.layers(baseMaps).addTo(map);
+  map.addControl(new customControl());
+  
+
+  // Creating Layer Control
+ //const layersControl =  L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+
+
+  // Adding Default Layer to the map
+  map.addLayer(esriLayer);
+
+
+  const legends ={
+    survey1 : ['Healthy', 'kandua rog', 'Dead, Leaf and Other Residues'],
+    survey2 : ['Healthy', 'Precut', 'Dead, Leaf and Other Residues'],
+    survey3 : ['Mature', 'Immature', 'Dead, Leaf and Other Residues' ]
+  };
+
+
+  // Function to add event listeners to the checkboxes after the control is added to the map
+  function handleLegends(value) {
+        switch(value) {
+          case "Survey 1":
+          addLegend(['Healthy', 'Unhealthy']);
+            break;
+          case "Survey 2":
+          addLegend(['Healthy', 'Unhealthy']);
+            break;
+          case "Survey 3":
+          addLegend(['Healthy', 'Unhealthy']);
+            break;
+          case "Survey 4":
+          addLegend(['Healthy', 'Unhealthy']);
+            break;
+        }
+  }
+  
+
+
+  // Ensure that the function runs after the control is fully loaded
+ // map.on('overlayadd overlayremove', addCheckboxListeners);
+
+  // Defining Custom icons options
+  //var iconOptions = {
+  //  iconUrl: 'data/icon/gps.png',
+  //  iconSize: [25, 45]
+  //}
+
+  // Creating a custom icon
+  //var customIcon = L.icon(iconOptions);
+  //var markerOptions = {
+   // title: "BharatRohan",
+  //  clickable: true,
+  //  draggable: false,
+  //  icon: customIcon
+//}
+
+  //
+  //var marker = L.marker([26.95616111, 81.47955556], markerOptions).addTo(map);
+
+  //
+ // var popup = marker.bindPopup(
+  //  '<b><center>BharatRohan Airborne Innovations</center></b> <div> <img style="width:100%" src="./br.svg" alt="image" </div>', {
+//minWidth: 256
+//});
+   
+  function addLegend(legendItems) {
+    // Remove existing legend
+    const existingLegend = document.querySelector('.info.legend');
+    if (existingLegend) {
+      existingLegend.parentNode.removeChild(existingLegend);
+    }
+  
+    // Only add a new legend if there are items to display
+    if (legendItems && legendItems.length > 0) {
+      const legend = L.control({ position: 'bottomleft' });
+      legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info legend');
+        // Adjust the colors here as per the number of visual distinctions you want
+       
+        const labels = [
+          `<i style="background:#1a9641"></i> ${legendItems[0]}`,
+          `<i style="background:#60b856"></i>`,  
+          `<i style="background:#a6d96a"></i>`, 
+          `<i style="background:#d3ec95"></i>`,  
+          `<i style="background:#ffffc0"></i>`,  
+          `<i style="background:#fed791"></i>`, 
+          `<i style="background:#fdae61"></i>`,
+          `<i style="background:#ea643F"></i> `,
+          `<i style="background:#d7191c"></i> ${legendItems[1]}`
+        ];
+        div.innerHTML = labels.join('<br>');
+        return div;
+      };
+      legend.addTo(map);
+    }
+  }
+  
+  //
+  var credits = L.controlCredits({
+    imageurl: './br.svg',
+    imagealt: 'BharatRohan',
+    tooltip: 'Made by BharatRohan',
+    width: '45px',
+    height: '45px',
+    expandcontent: 'Prescription Maps<br/>by <a href="https://www.bharatrohan.in/" target="_blank">BharatRohan</a>',
+  }).addTo(map);
+
+</script>
+</html>
